@@ -66,8 +66,9 @@ def slim_get_split(file_pattern='{}_????'):
         'object/difficult': slim.tfexample_decoder.Tensor('image/object/bbox/difficult'),
         'object/truncated': slim.tfexample_decoder.Tensor('image/object/bbox/truncated'),
     }
-    decoder = slim.tfexample_decoder.TFExampleDecoder(keys_to_features, items_to_handlers)
 
+    # TFRecords 文件读取
+    decoder = slim.tfexample_decoder.TFExampleDecoder(keys_to_features, items_to_handlers)
     dataset = slim.dataset.Dataset(
                 data_sources=file_pattern,
                 reader=tf.TFRecordReader,
@@ -90,9 +91,13 @@ def slim_get_split(file_pattern='{}_????'):
                                                                          'object/label',
                                                                          'object/bbox',
                                                                          'object/difficult'])
-    image, glabels, gbboxes = ssd_preprocessing.preprocess_image(org_image, glabels_raw, gbboxes_raw, [300, 300], is_training=True, data_format='channels_first', output_rgb=True)
+    image, glabels, gbboxes = ssd_preprocessing.preprocess_image(org_image, glabels_raw, gbboxes_raw,
+                                                                 [300, 300], is_training=True,
+                                                                 data_format='channels_first', output_rgb=True)
 
     image = tf.transpose(image, perm=(1, 2, 0))
+
+    # td.py_func 接收 tensor，转化为 numpy array，输入出现程序进行计算，结果转化为 Tensor 输出，增强程序的灵活性
     save_image_op = tf.py_func(save_image_with_bbox,
                             [ssd_preprocessing.unwhiten_image(image),
                             tf.clip_by_value(glabels, 0, tf.int64.max),
@@ -108,11 +113,16 @@ if __name__ == '__main__':
 
     # Create a session for running operations in the Graph.
     sess = tf.Session()
+
     # Initialize the variables (like the epoch counter).
+    # 先执行初始化工作
     sess.run(init_op)
 
     # Start input enqueue threads.
+    # tf.train.Coordinator() 创建一个线程管理器（协调器）对象
     coord = tf.train.Coordinator()
+
+    # 使用 start_queue_runners 启动队列填充
     threads = tf.train.start_queue_runners(sess=sess, coord=coord)
 
     try:
@@ -120,6 +130,7 @@ if __name__ == '__main__':
             # Run training steps or whatever
             print(sess.run(save_image_op))
 
+    # 到文件队列末尾抛出此异常
     except tf.errors.OutOfRangeError:
         print('Done training -- epoch limit reached')
     finally:

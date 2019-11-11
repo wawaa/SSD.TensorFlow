@@ -134,7 +134,8 @@ data_splits_num = {
     'val': 4952,
 }
 
-def slim_get_batch(num_classes, batch_size, split_name, file_pattern, num_readers, num_preprocessing_threads, image_preprocessing_fn, anchor_encoder, num_epochs=None, is_training=True):
+def slim_get_batch(num_classes, batch_size, split_name, file_pattern, num_readers, num_preprocessing_threads,
+                   image_preprocessing_fn, anchor_encoder, num_epochs=None, is_training=True):
     """Gets a dataset tuple with instructions for reading Pascal VOC dataset.
 
     Args:
@@ -182,6 +183,8 @@ def slim_get_batch(num_classes, batch_size, split_name, file_pattern, num_reader
         'object/difficult': slim.tfexample_decoder.Tensor('image/object/bbox/difficult'),
         'object/truncated': slim.tfexample_decoder.Tensor('image/object/bbox/truncated'),
     }
+
+    # TFRecords 文件读取
     decoder = slim.tfexample_decoder.TFExampleDecoder(keys_to_features, items_to_handlers)
 
     labels_to_names = {}
@@ -206,18 +209,17 @@ def slim_get_batch(num_classes, batch_size, split_name, file_pattern, num_reader
             shuffle=is_training,
             num_epochs=num_epochs)
 
-    [org_image, filename, shape, glabels_raw, gbboxes_raw, isdifficult] = provider.get(['image', 'filename', 'shape',
-                                                                     'object/label',
-                                                                     'object/bbox',
-                                                                     'object/difficult'])
+    [org_image, filename, shape, glabels_raw, gbboxes_raw, isdifficult] = provider.get(
+        ['image', 'filename', 'shape', 'object/label', 'object/bbox', 'object/difficult'])
 
     if is_training:
         # if all is difficult, then keep the first one
         isdifficult_mask =tf.cond(tf.count_nonzero(isdifficult, dtype=tf.int32) < tf.shape(isdifficult)[0],
                                 lambda : isdifficult < tf.ones_like(isdifficult),
-                                lambda : tf.one_hot(0, tf.shape(isdifficult)[0], on_value=True, off_value=False, dtype=tf.bool))
+                                lambda : tf.one_hot(0, tf.shape(isdifficult)[0], on_value=True, off_value=False,
+                                                    dtype=tf.bool))
 
-        glabels_raw = tf.boolean_mask(glabels_raw, isdifficult_mask)
+        glabels_raw = tf.boolean_mask(glabels_raw, isdifficult_mask)   # 在张量上应用布尔掩码
         gbboxes_raw = tf.boolean_mask(gbboxes_raw, isdifficult_mask)
 
     # Pre-processing image, labels and bboxes.

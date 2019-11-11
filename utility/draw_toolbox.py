@@ -37,22 +37,28 @@ def colors_subselect(colors, num_classes=21):
     return sub_colors
 
 colors = colors_subselect(mpcm.plasma.colors, num_classes=21)
+
+# 21 种色彩表
 colors_tableau = [(255, 255, 255), (31, 119, 180), (174, 199, 232), (255, 127, 14), (255, 187, 120),
                  (44, 160, 44), (152, 223, 138), (214, 39, 40), (255, 152, 150),
                  (148, 103, 189), (197, 176, 213), (140, 86, 75), (196, 156, 148),
                  (227, 119, 194), (247, 182, 210), (127, 127, 127), (199, 199, 199),
                  (188, 189, 34), (219, 219, 141), (23, 190, 207), (158, 218, 229)]
 
+
 def bboxes_draw_on_img(img, classes, scores, bboxes, thickness=2):
     shape = img.shape
     scale = 0.4
     text_thickness = 1
     line_type = 8
+
+    # bboxes:(400,4)
     for i in range(bboxes.shape[0]):
         if classes[i] < 1: continue
         bbox = bboxes[i]
         color = colors_tableau[classes[i]]
         # Draw bounding boxes
+        # 将 (0,1) 范围内的 bbox 坐标扩大到原图像
         p1 = (int(bbox[0] * shape[0]), int(bbox[1] * shape[1]))
         p2 = (int(bbox[2] * shape[0]), int(bbox[3] * shape[1]))
         if (p2[0] - p1[0] < 1) or (p2[1] - p1[1] < 1):

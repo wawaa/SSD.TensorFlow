@@ -21,7 +21,8 @@ import sys
 
 import tensorflow as tf
 
-def get_init_fn_for_scaffold(model_dir, checkpoint_path, model_scope, checkpoint_model_scope, checkpoint_exclude_scopes, ignore_missing_vars, name_remap=None):
+def get_init_fn_for_scaffold(model_dir, checkpoint_path, model_scope, checkpoint_model_scope,
+                             checkpoint_exclude_scopes, ignore_missing_vars, name_remap=None):
     if tf.train.latest_checkpoint(model_dir):
         tf.logging.info('Ignoring --checkpoint_path because a checkpoint already exists in %s.' % model_dir)
         return None
@@ -75,6 +76,7 @@ def get_init_fn_for_scaffold(model_dir, checkpoint_path, model_scope, checkpoint
             else:
                 tf.logging.warning('Variable %s missing in checkpoint %s.', var, checkpoint_path)
         variables_to_restore = available_vars
+
     if variables_to_restore:
         saver = tf.train.Saver(variables_to_restore, reshape=False)
         saver.build()
